@@ -36,6 +36,7 @@ function SystemState({ tenant }) {
             </div>
           ))}
         </div>
+        <div className="text-xs text-gray-400 mt-4">Synced 2 min ago</div>
       </div>
 
       {/* Customer org side */}
@@ -88,6 +89,7 @@ function SystemState({ tenant }) {
           <span className="text-sm text-gray-700">Users</span>
           <span className="text-sm font-semibold text-gray-900">{tenant.users.length}</span>
         </div>
+        <div className="text-xs text-gray-400 mt-2">Synced 2 min ago</div>
       </div>
     </div>
   );
