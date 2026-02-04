@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TENANTS, DASHBOARD_DATA, BILLING_DATA, CONTACTS_DATA } from "./data.js";
 import { checkAccess } from "./policyEngine.js";
+import KanukiConsole from "./KanukiConsole.jsx";
 
 function DashboardPage({ canExport }) {
   const cards = [
@@ -137,6 +138,8 @@ export default function App() {
   const [userId, setUserId] = useState("sarah");
   const [activePage, setActivePage] = useState("Dashboard");
   const [policies, setPolicies] = useState([]);
+  // Toggle between CRM view and Kanuki console
+  const [view, setView] = useState("crm");
 
   const tenant = TENANTS[tenantId];
   const user = tenant.users.find((u) => u.id === userId);
@@ -147,12 +150,38 @@ export default function App() {
     setActivePage("Dashboard");
   };
 
-  // Policy engine checks
+  const handleApplyPolicy = (policy) => {
+    setPolicies((prev) => [...prev, policy]);
+  };
+
   const pageAccess = checkAccess(policies, user, tenantId, activePage, "View");
   const exportAccess = checkAccess(policies, user, tenantId, activePage, "Export CSV");
 
   const pages = ["Dashboard", "Billing", "Contacts"];
 
+  // Kanuki console view
+  if (view === "kanuki") {
+    return (
+      <div>
+        {/* Switch back to CRM */}
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={() => setView("crm")}
+            className="px-3 py-1.5 text-xs bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 cursor-pointer"
+          >
+            ← Back to AcmeCRM
+          </button>
+        </div>
+        <KanukiConsole
+          tenantId={tenantId}
+          onApplyPolicy={handleApplyPolicy}
+          policies={policies}
+        />
+      </div>
+    );
+  }
+
+  // CRM view
   return (
     <div className="min-h-screen bg-gray-100 flex">
       {/* Sidebar */}
@@ -177,6 +206,16 @@ export default function App() {
             </button>
           ))}
         </nav>
+
+        {/* Kanuki console button */}
+        <div className="p-3 border-t border-gray-200">
+          <button
+            onClick={() => setView("kanuki")}
+            className="w-full px-3 py-2 text-sm bg-zinc-900 text-zinc-100 rounded hover:bg-zinc-800 cursor-pointer"
+          >
+            Open Kanuki Console
+          </button>
+        </div>
 
         {/* User + tenant switchers */}
         <div className="p-3 border-t border-gray-200">
