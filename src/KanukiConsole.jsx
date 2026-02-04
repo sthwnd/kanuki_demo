@@ -1,23 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PRODUCT_SCHEMA, TENANTS } from "./data.js";
 import { translatePolicy } from "./policyAuthoring.js";
 
-// Displays the known schema for the current tenant
 function SystemState({ tenant }) {
   return (
-    <div className="mb-6 grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-5">
       {/* Product side */}
-      <div className="bg-zinc-800 rounded-lg p-4">
-        <div className="text-[11px] uppercase tracking-wider text-zinc-500 mb-3">
-          Known Product · {PRODUCT_SCHEMA.name}
+      <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#3B82F6" }}></div>
+          <div className="text-sm font-semibold text-gray-800 uppercase tracking-wide">
+            SaaS Product
+          </div>
         </div>
-        <div className="space-y-2">
+        <div className="text-lg text-gray-900 font-semibold mb-4">{PRODUCT_SCHEMA.name}</div>
+
+        <div className="space-y-3">
           {PRODUCT_SCHEMA.resources.map((r) => (
-            <div key={r.name} className="flex items-start gap-2">
-              <span className="text-sm text-zinc-300 font-medium w-24 shrink-0">{r.name}</span>
-              <div className="flex flex-wrap gap-1">
+            <div key={r.name}>
+              <div className="text-sm font-semibold text-gray-800 mb-1">{r.name}</div>
+              <div className="flex flex-wrap gap-1.5">
                 {r.actions.map((a) => (
-                  <span key={a} className="text-xs px-1.5 py-0.5 bg-zinc-700 text-zinc-400 rounded">
+                  <span
+                    key={a}
+                    className={`text-sm px-2 py-0.5 rounded font-medium ${
+                      a === "Delete Invoice" || a === "Bulk Delete"
+                        ? "bg-red-50 text-red-700 border border-red-200"
+                        : "bg-blue-50 text-blue-800 border border-blue-100"
+                    }`}
+                  >
                     {a}
                   </span>
                 ))}
@@ -27,112 +38,128 @@ function SystemState({ tenant }) {
         </div>
       </div>
 
-      {/* Org side */}
-      <div className="bg-zinc-800 rounded-lg p-4">
-        <div className="text-[11px] uppercase tracking-wider text-zinc-500 mb-3">
-          Known Org · {tenant.name}
+      {/* Customer org side */}
+      <div
+        className="rounded-lg p-5 shadow-sm"
+        style={{
+          backgroundColor: `${tenant.accent}08`,
+          border: `1px solid ${tenant.accent}30`,
+        }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <div
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: tenant.accent }}
+          ></div>
+          <div className="text-sm font-semibold text-gray-800 uppercase tracking-wide">
+            Customer Organization
+          </div>
         </div>
-        <div className="space-y-2">
+        <div
+          className="text-lg font-semibold mb-4"
+          style={{ color: tenant.accentMuted }}
+        >
+          {tenant.name}
+        </div>
+
+        <div className="space-y-3">
           {tenant.attributes.map((a) => (
-            <div key={a.name} className="flex items-start gap-2">
-              <span className="text-sm text-zinc-300 font-medium w-32 shrink-0">{a.name}</span>
-              <div className="flex flex-wrap gap-1">
+            <div key={a.name}>
+              <div className="text-sm font-semibold text-gray-800 mb-1">{a.name}</div>
+              <div className="flex flex-wrap gap-1.5">
                 {a.values.map((v) => (
-                  <span key={v} className="text-xs px-1.5 py-0.5 bg-zinc-700 text-zinc-400 rounded">
+                  <span
+                    key={v}
+                    className="text-sm px-2 py-0.5 rounded font-medium"
+                    style={{
+                      backgroundColor: `${tenant.accent}12`,
+                      color: tenant.accentMuted,
+                      border: `1px solid ${tenant.accent}25`,
+                    }}
+                  >
                     {v}
                   </span>
                 ))}
               </div>
             </div>
           ))}
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm text-zinc-300 font-medium w-32 shrink-0">Users</span>
-            <span className="text-xs text-zinc-400">{tenant.users.length}</span>
-          </div>
         </div>
-        <div className="text-[10px] text-zinc-600 mt-3">Last synced: 2 min ago</div>
+        <div className="flex items-center gap-2 mt-4">
+          <span className="text-sm text-gray-700">Users</span>
+          <span className="text-sm font-semibold text-gray-900">{tenant.users.length}</span>
+        </div>
       </div>
     </div>
   );
 }
 
-// Structured policy card with validation indicators
 function PolicyCard({ policy, onApply, applied }) {
   const [showJson, setShowJson] = useState(false);
 
-  // Format the rule as readable text
   const ruleText = policy.effect === "allow_only"
     ? `${policy.attribute} = ${policy.value} → Allow. All others → Deny.`
     : `${policy.attribute} = ${policy.value} → Deny.`;
 
   return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-5 mt-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm font-medium text-zinc-200">{policy.name}</div>
+    <div className="bg-white border border-gray-200 rounded-lg p-6 mt-5 shadow-sm">
+      <div className="flex items-center justify-between mb-5">
+        <div className="text-base font-semibold text-gray-900">{policy.name}</div>
         <button
           onClick={() => setShowJson(!showJson)}
-          className="text-[11px] text-zinc-500 hover:text-zinc-400 cursor-pointer"
+          className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
         >
           {showJson ? "View card" : "View as JSON"}
         </button>
       </div>
 
       {showJson ? (
-        <pre className="text-xs text-zinc-400 bg-zinc-900 rounded p-3 overflow-auto">
+        <pre className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded p-4 overflow-auto">
           {JSON.stringify(policy, null, 2)}
         </pre>
       ) : (
-        <div className="space-y-3 text-sm">
-          {/* Resource + Action */}
-          <div className="flex gap-6">
-            <div>
-              <div className="text-[11px] text-zinc-500 mb-0.5">Resource</div>
-              <div className="text-zinc-300">{policy.resource} → {policy.action}</div>
-            </div>
-          </div>
-
-          {/* Rule */}
+        <div className="space-y-4">
           <div>
-            <div className="text-[11px] text-zinc-500 mb-0.5">Rule</div>
-            <div className="text-zinc-300">{ruleText}</div>
+            <div className="text-xs text-gray-500 mb-1">Resource</div>
+            <div className="text-base text-gray-900">{policy.resource} → {policy.action}</div>
           </div>
-
-          {/* Impact */}
           <div>
-            <div className="text-[11px] text-zinc-500 mb-0.5">Impact</div>
-            <div className="text-zinc-300">
-              <span className="text-green-400">Retain access:</span>{" "}
+            <div className="text-xs text-gray-500 mb-1">Rule</div>
+            <div className="text-base text-gray-900">{ruleText}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 mb-1">Impact</div>
+            <div className="text-base text-gray-900">
+              <span className="text-green-700 font-medium">Retain access:</span>{" "}
               {policy.impact.retain.length <= 4
                 ? policy.impact.retain.join(", ")
                 : `${policy.impact.retain.slice(0, 3).join(", ")}, +${policy.impact.retain.length - 3} others`}
             </div>
-            <div className="text-zinc-300 mt-0.5">
-              <span className="text-red-400">Lose access:</span>{" "}
+            <div className="text-base text-gray-900 mt-1">
+              <span className="text-red-700 font-medium">Lose access:</span>{" "}
               {policy.impact.lose.length <= 4
                 ? policy.impact.lose.join(", ")
                 : `${policy.impact.lose.slice(0, 3).join(", ")}, +${policy.impact.lose.length - 3} others`}
             </div>
           </div>
-
-          {/* Validation — boring, deterministic, rule-engine feel */}
-          <div className="flex items-center gap-3 pt-2 border-t border-zinc-700">
-            <span className="text-xs text-green-500">✓ Validated</span>
-            <span className="text-xs text-zinc-500">No conflicts detected</span>
+          <div className="flex items-center gap-4 pt-3 border-t border-gray-100">
+            <span className="text-sm text-green-700 font-medium">✓ Validated</span>
+            <span className="text-sm text-gray-500">No conflicts detected</span>
           </div>
         </div>
       )}
 
-      {/* Apply button */}
       {!applied ? (
         <button
           onClick={onApply}
-          className="mt-4 px-4 py-2 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700 cursor-pointer w-full"
+          className="mt-5 px-4 py-2.5 text-white text-sm font-medium rounded cursor-pointer w-full"
+          style={{ backgroundColor: "#3B82F6" }}
+          onMouseEnter={(e) => e.target.style.backgroundColor = "#2563EB"}
+          onMouseLeave={(e) => e.target.style.backgroundColor = "#3B82F6"}
         >
           Apply Policy
         </button>
       ) : (
-        <div className="mt-4 px-4 py-2 bg-zinc-700 text-emerald-400 text-sm rounded text-center">
+        <div className="mt-5 px-4 py-2.5 bg-green-50 text-green-700 border border-green-200 text-sm font-medium rounded text-center">
           Policy Active
         </div>
       )}
@@ -140,8 +167,7 @@ function PolicyCard({ policy, onApply, applied }) {
   );
 }
 
-// Main Kanuki console component
-export default function KanukiConsole({ tenantId, onApplyPolicy, policies }) {
+export default function KanukiConsole({ tenantId, onTenantChange, onApplyPolicy, onBackToCRM, policies }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -149,9 +175,14 @@ export default function KanukiConsole({ tenantId, onApplyPolicy, policies }) {
   const [applied, setApplied] = useState(false);
 
   const tenant = TENANTS[tenantId];
-
-  // API key from env — set in .env as VITE_ANTHROPIC_API_KEY
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
+
+  useEffect(() => {
+    setInput("");
+    setProposedPolicy(null);
+    setApplied(false);
+    setError(null);
+  }, [tenantId]);
 
   const handleSubmit = async () => {
     if (!input.trim()) return;
@@ -177,15 +208,10 @@ export default function KanukiConsole({ tenantId, onApplyPolicy, policies }) {
 
   const handleApply = () => {
     if (!proposedPolicy) return;
-    // Add tenant ID and pass to parent
-    onApplyPolicy({
-      ...proposedPolicy,
-      tenantId,
-    });
+    onApplyPolicy({ ...proposedPolicy, tenantId });
     setApplied(true);
   };
 
-  // Reset state when tenant changes
   const handleNewPolicy = () => {
     setInput("");
     setProposedPolicy(null);
@@ -193,24 +219,59 @@ export default function KanukiConsole({ tenantId, onApplyPolicy, policies }) {
     setError(null);
   };
 
+  const tenantPolicies = policies.filter((p) => p.tenantId === tenantId);
+
   return (
-    <div className="min-h-screen bg-zinc-900 text-zinc-100">
+    <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
       {/* Header */}
-      <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
-        <div>
-          <div className="text-base font-semibold tracking-tight">kanuki</div>
-          <div className="text-xs text-zinc-500 mt-0.5">{tenant.name}</div>
+      <div
+        className="px-6 py-4 flex items-center justify-between bg-white border-b border-gray-200"
+        style={{ borderTop: `3px solid ${tenant.accent}` }}
+      >
+        <div className="flex items-center gap-6">
+          <div>
+            <div className="text-lg font-bold tracking-tight" style={{ color: "#3B82F6" }}>
+              kanuki
+            </div>
+            <div className="text-xs text-gray-500">Policy Console</div>
+          </div>
+
+          <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: tenant.accent }}
+            ></div>
+            <div>
+              <div className="text-xs text-gray-500">Customer</div>
+              <div className="text-lg font-semibold" style={{ color: tenant.accentMuted }}>
+                {tenant.name}
+              </div>
+            </div>
+            <select
+              value={tenantId}
+              onChange={(e) => onTenantChange(e.target.value)}
+              className="ml-2 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs text-gray-600 cursor-pointer focus:outline-none"
+            >
+              {Object.values(TENANTS).map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="text-[11px] text-zinc-600">Policy Console</div>
+
+        <button
+          onClick={onBackToCRM}
+          className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-200 text-gray-600 rounded hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
+        >
+          ← Back to AcmeCRM
+        </button>
       </div>
 
-      <div className="max-w-2xl mx-auto px-6 py-8">
-        {/* Known system state */}
+      <div className="max-w-3xl mx-auto px-6 py-8">
         <SystemState tenant={tenant} />
 
-        {/* Policy input */}
-        <div className="mt-6">
-          <label className="text-[11px] uppercase tracking-wider text-zinc-500 block mb-2">
+        <div className="mt-8">
+          <label className="text-xs uppercase tracking-wider text-gray-500 block mb-2">
             Describe the access policy you want to define
           </label>
           <div className="flex gap-2">
@@ -219,58 +280,52 @@ export default function KanukiConsole({ tenantId, onApplyPolicy, policies }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              placeholder='e.g. "Only the finance department should be able to see the billing page"'
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500"
+              className="flex-1 bg-white border border-gray-300 rounded px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 shadow-sm"
               disabled={loading}
             />
             <button
               onClick={handleSubmit}
               disabled={loading || !input.trim()}
-              className="px-4 py-2 bg-zinc-700 text-zinc-200 text-sm rounded hover:bg-zinc-600 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+              className="px-5 py-3 text-white text-sm font-medium rounded disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed shadow-sm"
+              style={{ backgroundColor: "#3B82F6" }}
             >
               {loading ? "..." : "Submit"}
             </button>
           </div>
         </div>
 
-        {/* Error */}
         {error && (
-          <div className="mt-3 text-sm text-red-400 bg-red-950 border border-red-900 rounded px-3 py-2">
+          <div className="mt-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded px-4 py-3">
             {error}
           </div>
         )}
 
-        {/* Policy card */}
         {proposedPolicy && (
           <PolicyCard policy={proposedPolicy} onApply={handleApply} applied={applied} />
         )}
 
-        {/* New policy button after applying */}
         {applied && (
           <button
             onClick={handleNewPolicy}
-            className="mt-3 text-xs text-zinc-500 hover:text-zinc-400 cursor-pointer"
+            className="mt-3 text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
           >
             + Define another policy
           </button>
         )}
 
-        {/* Active policies for this tenant */}
-        {policies.filter((p) => p.tenantId === tenantId).length > 0 && (
-          <div className="mt-8 pt-6 border-t border-zinc-800">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-500 mb-3">
+        {tenantPolicies.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="text-xs uppercase tracking-wider text-gray-500 mb-3">
               Active Policies · {tenant.name}
             </div>
-            {policies
-              .filter((p) => p.tenantId === tenantId)
-              .map((p, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm text-zinc-400 mb-2">
-                  <span className="text-green-500 text-xs">●</span>
-                  <span>{p.name}</span>
-                  <span className="text-zinc-600">·</span>
-                  <span className="text-zinc-500">{p.resource} → {p.action}</span>
-                </div>
-              ))}
+            {tenantPolicies.map((p, i) => (
+              <div key={i} className="flex items-center gap-3 text-sm text-gray-700 mb-2">
+                <span className="text-green-600 text-xs">●</span>
+                <span className="font-medium">{p.name}</span>
+                <span className="text-gray-300">·</span>
+                <span className="text-gray-500">{p.resource} → {p.action}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>

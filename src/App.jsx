@@ -138,7 +138,6 @@ export default function App() {
   const [userId, setUserId] = useState("sarah");
   const [activePage, setActivePage] = useState("Dashboard");
   const [policies, setPolicies] = useState([]);
-  // Toggle between CRM view and Kanuki console
   const [view, setView] = useState("crm");
 
   const tenant = TENANTS[tenantId];
@@ -159,36 +158,37 @@ export default function App() {
 
   const pages = ["Dashboard", "Billing", "Contacts"];
 
-  // Kanuki console view
   if (view === "kanuki") {
     return (
-      <div>
-        {/* Switch back to CRM */}
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={() => setView("crm")}
-            className="px-3 py-1.5 text-xs bg-zinc-700 text-zinc-300 rounded hover:bg-zinc-600 cursor-pointer"
-          >
-            ← Back to AcmeCRM
-          </button>
-        </div>
-        <KanukiConsole
-          tenantId={tenantId}
-          onApplyPolicy={handleApplyPolicy}
-          policies={policies}
-        />
-      </div>
+      <KanukiConsole
+        tenantId={tenantId}
+        onTenantChange={switchTenant}
+        onApplyPolicy={handleApplyPolicy}
+        onBackToCRM={() => setView("crm")}
+        policies={policies}
+      />
     );
   }
 
-  // CRM view
   return (
     <div className="min-h-screen bg-gray-100 flex">
-      {/* Sidebar */}
-      <div className="w-56 bg-white border-r border-gray-200 flex flex-col">
+      {/* Sidebar with tenant accent */}
+      <div
+        className="w-56 bg-white border-r border-gray-200 flex flex-col"
+        style={{ borderLeft: `3px solid ${tenant.accent}` }}
+      >
         <div className="p-4 border-b border-gray-200">
           <div className="text-base font-bold text-gray-800 tracking-tight">AcmeCRM</div>
-          <div className="text-xs text-gray-400 mt-0.5">{tenant.name}</div>
+          {/* Tenant name with color dot */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: tenant.accent }}
+            ></div>
+            <div className="text-sm font-medium" style={{ color: tenant.accent }}>
+              {tenant.name}
+            </div>
+          </div>
         </div>
 
         <nav className="flex-1 p-3">
@@ -207,7 +207,6 @@ export default function App() {
           ))}
         </nav>
 
-        {/* Kanuki console button */}
         <div className="p-3 border-t border-gray-200">
           <button
             onClick={() => setView("kanuki")}
@@ -217,7 +216,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* User + tenant switchers */}
         <div className="p-3 border-t border-gray-200">
           <label className="text-xs text-gray-400 block mb-1">Current user</label>
           <select
@@ -245,28 +243,45 @@ export default function App() {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <span className="text-sm font-medium text-gray-800">{user.name}</span>
-            <span className="text-sm text-gray-400 ml-2">{user.department}</span>
-            {user.employmentType === "Contractor" && (
-              <span className="text-xs ml-2 px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded">Contractor</span>
-            )}
-          </div>
+      {/* Main content with tenant accent top bar */}
+      <div className="flex-1 flex flex-col">
+        {/* Tenant indicator bar */}
+        <div
+          className="px-8 py-3 flex items-center gap-2"
+          style={{ backgroundColor: `${tenant.accent}10`, borderBottom: `1px solid ${tenant.accent}25` }}
+        >
+          <div
+            className="w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: tenant.accent }}
+          ></div>
+          <span className="text-sm font-medium" style={{ color: tenant.accent }}>
+            {tenant.name}
+          </span>
+          <span className="text-xs text-gray-400">· {tenant.industry}</span>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          {!pageAccess.allowed ? (
-            <AccessRestricted policyName={pageAccess.policyName} />
-          ) : activePage === "Dashboard" ? (
-            <DashboardPage canExport={exportAccess.allowed} />
-          ) : activePage === "Billing" ? (
-            <BillingPage />
-          ) : (
-            <ContactsPage canExport={exportAccess.allowed} />
-          )}
+        <div className="flex-1 p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <span className="text-sm font-medium text-gray-800">{user.name}</span>
+              <span className="text-sm text-gray-400 ml-2">{user.department}</span>
+              {user.employmentType === "Contractor" && (
+                <span className="text-xs ml-2 px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded">Contractor</span>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            {!pageAccess.allowed ? (
+              <AccessRestricted policyName={pageAccess.policyName} />
+            ) : activePage === "Dashboard" ? (
+              <DashboardPage canExport={exportAccess.allowed} />
+            ) : activePage === "Billing" ? (
+              <BillingPage />
+            ) : (
+              <ContactsPage canExport={exportAccess.allowed} />
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -2,6 +2,10 @@
 function getUserAttribute(user, attributeName) {
     if (attributeName === "Department") return user.department;
     if (attributeName === "Employment Type") return user.employmentType;
+    if (attributeName === "Role") return user.role;
+    if (attributeName === "Region") return user.region;
+    if (attributeName === "Clearance") return user.clearance;
+    if (attributeName === "Office") return user.office;
     return null;
   }
   
